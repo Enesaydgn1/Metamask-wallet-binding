@@ -1,0 +1,108 @@
+<html>
+
+<head>
+  <title>Web3 MetaMask Giriş</title>
+  <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+
+<body class="flex w-screen h-screen justify-center items-center">
+  <div class="flex-col space-y-2 justify-center items-center">
+    <button id="giris_butonu" onclick="" class="mx-auto rounded-md p-2 bg-purple-500 text-white">
+      MetaMask ile Giriş Yap
+    </button>
+    <p id="cuzdan_alani" class="text-lg text-gray-600 my-2"></p>
+  </div>
+
+  <script>
+    window.kullaniciCuzdani = null;
+    const giris_butonu = document.getElementById("giris_butonu");
+    const cuzdan_alani = document.getElementById("cuzdan_alani");
+
+    window.onload = function () 
+    {
+      if (window.ethereum) {
+        this.ethereum.on("accountsChanged", cuzdanDegisim);
+
+        window.ethereum
+          .request({ method: "eth_accounts" })
+          .then(cuzdanDegisim)
+          .catch((err) => {
+            console.log(err);
+          });
+      } else {
+        console.log("MetaMask Yüklü Deği!");
+      }
+    };
+
+    const cuzdanDegisim = (aktifCuzdan) => {
+      console.log("Cüzdan Değişti");
+      console.log(aktifCuzdan)
+      cikisMetaMask();
+    };
+
+    function gecis_buton() {
+      if (!window.ethereum) {
+        giris_butonu.innerText = "MetaMask Yüklü Deği!";
+        giris_butonu.classList.remove("bg-purple-500", "text-white");
+        giris_butonu.classList.add(
+          "bg-gray-500",
+          "text-gray-100",
+          "cursor-not-allowed"
+        );
+        return false;
+      }
+
+      giris_butonu.addEventListener("click", girisMetaMask);
+    }
+
+    async function girisMetaMask() {
+      const hesaplar = await window.ethereum
+        .request({ method: "eth_requestAccounts" })
+        .catch((err) => {
+          console.error(err.message);
+          return;
+        });
+      if (!hesaplar) {
+        return;
+      }
+
+      window.kullaniciCuzdani = hesaplar[0];
+
+      const bakiye = await window.ethereum
+        .request({
+          method: "eth_getBalance",
+          params: [window.kullaniciCuzdani],
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+
+      let okunabilirBakiye = parseInt(bakiye) / Math.pow(10, 18);
+
+      cuzdan_alani.innerText = `\nCüzdan » ${window.kullaniciCuzdani}\n\nBakiye » ${okunabilirBakiye}`;
+      giris_butonu.innerText = "MetaMask'tan Çıkış Yap";
+
+      giris_butonu.removeEventListener("click", girisMetaMask);
+      setTimeout(() => {
+        giris_butonu.addEventListener("click", cikisMetaMask);
+      }, 200);
+    }
+
+    function cikisMetaMask() {
+      window.kullaniciCuzdani = null;
+      cuzdan_alani.innerText = "";
+      giris_butonu.innerText = "MetaMask ile Giriş Yap";
+
+      giris_butonu.removeEventListener("click", cikisMetaMask);
+      setTimeout(() => {
+        giris_butonu.addEventListener("click", girisMetaMask);
+      }, 200);
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      gecis_buton();
+    });
+  </script>
+</body>
+
+</html>
